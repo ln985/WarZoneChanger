@@ -5,6 +5,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write  # 添加这一行，授予写权限
+
 jobs:
   build:
     runs-on: ubuntu-latest

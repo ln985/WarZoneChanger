@@ -3,12 +3,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0f172a">
-
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -17,14 +15,12 @@
             android:paddingHorizontal="32dp"
             android:paddingTop="120dp"
             android:paddingBottom="48dp">
-
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="🎮"
                 android:textSize="64sp"
                 android:layout_marginBottom="16dp"/>
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -35,7 +31,6 @@
                 android:gravity="center"
                 android:letterSpacing="0.05"
                 android:layout_marginBottom="6dp"/>
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -45,7 +40,6 @@
                 android:gravity="center"
                 android:letterSpacing="0.1"
                 android:layout_marginBottom="48dp"/>
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -53,7 +47,6 @@
                 android:orientation="vertical"
                 android:padding="24dp"
                 android:layout_marginBottom="16dp">
-
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -62,7 +55,6 @@
                     android:textSize="16sp"
                     android:textStyle="bold"
                     android:layout_marginBottom="16dp"/>
-
                 <EditText
                     android:id="@+id/et_card_key"
                     android:layout_width="match_parent"
@@ -76,7 +68,6 @@
                     android:layout_marginBottom="8dp"
                     android:singleLine="true"
                     android:imeOptions="actionDone"/>
-
                 <TextView
                     android:id="@+id/tv_error"
                     android:layout_width="match_parent"
@@ -85,11 +76,9 @@
                     android:textSize="13sp"
                     android:visibility="gone"
                     android:layout_marginBottom="8dp"/>
-
                 <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
-
                     <ProgressBar
                         android:id="@+id/progress"
                         android:layout_width="28dp"
@@ -98,7 +87,6 @@
                         android:visibility="gone"/>
                 </FrameLayout>
             </LinearLayout>
-
             <Button
                 android:id="@+id/btn_login"
                 android:layout_width="match_parent"
@@ -110,7 +98,6 @@
                 android:textColor="#ffffff"
                 android:letterSpacing="0.15"
                 android:layout_marginBottom="12dp"/>
-
             <Button
                 android:id="@+id/btn_announcement"
                 android:layout_width="match_parent"
@@ -120,7 +107,6 @@
                 android:background="@drawable/bg_btn_blue"
                 android:textColor="#ffffff"
                 android:layout_marginBottom="24dp"/>
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -128,7 +114,6 @@
                 android:textColor="#1e293b"
                 android:textSize="11sp"
                 android:gravity="center"/>
-
         </LinearLayout>
     </ScrollView>
 </FrameLayout>

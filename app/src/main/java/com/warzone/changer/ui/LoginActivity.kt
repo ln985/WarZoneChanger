@@ -22,11 +22,11 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var btnLogin: Button
     private lateinit var progressBar: ProgressBar
     private lateinit var tvError: TextView
+    private lateinit var btnAnnouncement: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // 已授权直接进主页（主页里会弹公告）
         if (DeviceStore.isAuthorized(this)) {
             goMain()
             return
@@ -38,6 +38,7 @@ class LoginActivity : AppCompatActivity() {
         btnLogin = findViewById(R.id.btn_login)
         progressBar = findViewById(R.id.progress)
         tvError = findViewById(R.id.tv_error)
+        btnAnnouncement = findViewById(R.id.btn_announcement)
 
         btnLogin.setOnClickListener {
             val key = etKey.text.toString().trim()
@@ -48,7 +49,10 @@ class LoginActivity : AppCompatActivity() {
             doLogin(key)
         }
 
-        // 进入登录页就加载公告弹窗
+        btnAnnouncement.setOnClickListener {
+            loadAndShowAnnouncements()
+        }
+
         loadAndShowAnnouncements()
     }
 
@@ -84,9 +88,6 @@ class LoginActivity : AppCompatActivity() {
         finish()
     }
 
-    /**
-     * 加载公告并在登录前以弹窗展示
-     */
     private fun loadAndShowAnnouncements() {
         lifecycleScope.launch {
             try {
@@ -106,7 +107,7 @@ class LoginActivity : AppCompatActivity() {
 
         for ((index, ann) in announcements.withIndex()) {
             val titleView = TextView(this@LoginActivity).apply {
-                text = "📢 ${ann.title}"
+                text = ann.title
                 setTextColor(0xFF60A5FA.toInt())
                 textSize = 17f
                 typeface = Typeface.DEFAULT_BOLD

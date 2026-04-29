@@ -12,7 +12,6 @@ import com.google.gson.reflect.TypeToken
 import com.warzone.changer.R
 import com.warzone.changer.data.LocationStore
 import com.warzone.changer.model.SelectedLocation
-import java.io.File
 
 class LocationPickerActivity : AppCompatActivity() {
 
@@ -32,9 +31,7 @@ class LocationPickerActivity : AppCompatActivity() {
     private lateinit var etSearch: EditText
 
     private var allProvinces: List<Region> = emptyList()
-    private var provinces: List<Region> = emptyList()
-    private var cities: List<Region> = emptyList()
-    private var districts: List<Region> = emptyList()
+    private var displayList: List<Region> = emptyList()
 
     private var selectedProvince: Region? = null
     private var selectedCity: Region? = null
@@ -58,144 +55,92 @@ class LocationPickerActivity : AppCompatActivity() {
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) {
-                filterByKeyword(s?.toString()?.trim() ?: "")
-            }
+            override fun afterTextChanged(s: Editable?) { filterByKeyword(s?.toString()?.trim() ?: "") }
         })
 
+        // Province click
         lvProvince.setOnItemClickListener { _, _, pos, _ ->
-            if (pos < provinces.size) {
-                selectedProvince = provinces[pos]
+            if (pos < displayList.size) {
+                selectedProvince = displayList[pos]
                 selectedCity = null; selectedDistrict = null
-                cities = selectedProvince?.list ?: emptyList()
-                districts = emptyList()
                 etSearch.text.clear()
-                if (cities.isEmpty() || isLeafLevel(cities)) {
-                    selectedCity = null
-                    updateBreadcrumb()
-                    btnConfirm.isEnabled = true
+                val children = selectedProvince?.list ?: emptyList()
+                if (children.isEmpty()) {
+                    // No city level -> confirm at province
+                    updateBreadcrumb(); btnConfirm.isEnabled = true
                 } else {
-                    showCityList()
+                    showList(1, children)
                 }
             }
         }
 
+        // City click
         lvCity.setOnItemClickListener { _, _, pos, _ ->
-            if (pos < cities.size) {
-                selectedCity = cities[pos]
+            if (pos < displayList.size) {
+                selectedCity = displayList[pos]
                 selectedDistrict = null
-                districts = selectedCity?.list ?: emptyList()
                 etSearch.text.clear()
-                if (districts.isEmpty() || isLeafLevel(districts)) {
-                    selectedDistrict = null
-                    updateBreadcrumb()
-                    btnConfirm.isEnabled = true
+                val children = selectedCity?.list ?: emptyList()
+                if (children.isEmpty()) {
+                    // No district -> confirm at city
+                    updateBreadcrumb(); btnConfirm.isEnabled = true
                 } else {
-                    showDistrictList()
+                    showList(2, children)
                 }
             }
         }
 
+        // District click
         lvDistrict.setOnItemClickListener { _, _, pos, _ ->
-            if (pos < districts.size) {
-                selectedDistrict = districts[pos]
-                updateBreadcrumb()
-                btnConfirm.isEnabled = true
+            if (pos < displayList.size) {
+                selectedDistrict = displayList[pos]
+                updateBreadcrumb(); btnConfirm.isEnabled = true
             }
         }
 
         btnConfirm.setOnClickListener { saveLocation() }
     }
 
-    private fun isLeafLevel(items: List<Region>): Boolean {
-        return items.all { it.list.isNullOrEmpty() }
-    }
-
     private fun loadRegions() {
         try {
-            val json = try {
-                assets.open("warzone.json").bufferedReader().use { it.readText() }
-            } catch (e: Exception) {
-                val file = File("/storage/emulated/0/\u6218\u533a.json")
-                if (file.exists()) file.readText() else throw e
-            }
+            val json = assets.open("warzone.json").bufferedReader().use { it.readText() }
             val type = object : TypeToken<List<Region>>() {}.type
             allProvinces = Gson().fromJson(json, type)
-            provinces = allProvinces
-            showProvinceList()
+            showList(0, allProvinces)
         } catch (e: Exception) {
-            Toast.makeText(this, "Load failed: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "加载失败: " + e.message, Toast.LENGTH_LONG).show()
         }
+    }
+
+    private fun showList(level: Int, items: List<Region>) {
+        currentLevel = level
+        displayList = items
+        btnConfirm.isEnabled = false
+        lvProvince.visibility = if (level == 0) View.VISIBLE else View.GONE
+        lvCity.visibility = if (level == 1) View.VISIBLE else View.GONE
+        lvDistrict.visibility = if (level == 2) View.VISIBLE else View.GONE
+        tvTitle.text = when (level) { 0 -> "选择省份"; 1 -> "选择城市"; else -> "选择区县" }
+        etSearch.hint = "搜索"
+        refreshAdapter()
+        updateBreadcrumb()
     }
 
     private fun filterByKeyword(keyword: String) {
-        if (keyword.isEmpty()) {
-            when (currentLevel) {
-                0 -> provinces = allProvinces
-                1 -> cities = selectedProvince?.list ?: emptyList()
-                2 -> districts = selectedCity?.list ?: emptyList()
-            }
-        } else {
-            when (currentLevel) {
-                0 -> provinces = allProvinces.filter {
-                    it.fullName.contains(keyword, true) || it.shortName.contains(keyword, true)
-                }
-                1 -> cities = (selectedProvince?.list ?: emptyList()).filter {
-                    it.fullName.contains(keyword, true) || it.shortName.contains(keyword, true)
-                }
-                2 -> districts = (selectedCity?.list ?: emptyList()).filter {
-                    it.fullName.contains(keyword, true) || it.shortName.contains(keyword, true)
-                }
-            }
+        val source = when (currentLevel) {
+            0 -> allProvinces
+            1 -> selectedProvince?.list ?: emptyList()
+            2 -> selectedCity?.list ?: emptyList()
+            else -> emptyList()
         }
-        refreshCurrentList()
-    }
-
-    private fun refreshCurrentList() {
-        when (currentLevel) {
-            0 -> lvProvince.adapter = makeAdapter(provinces)
-            1 -> lvCity.adapter = makeAdapter(cities)
-            2 -> lvDistrict.adapter = makeAdapter(districts)
+        displayList = if (keyword.isEmpty()) source else source.filter {
+            it.fullName.contains(keyword, true) || it.shortName.contains(keyword, true)
         }
+        refreshAdapter()
     }
 
-    private fun showProvinceList() {
-        currentLevel = 0
-        lvProvince.visibility = View.VISIBLE
-        lvCity.visibility = View.GONE
-        lvDistrict.visibility = View.GONE
-        btnConfirm.isEnabled = false
-        tvTitle.text = "\u9009\u62e9\u7701\u4efd"
-        etSearch.hint = "\ud83d\udd0d Search..."
-        provinces = allProvinces
-        lvProvince.adapter = makeAdapter(provinces)
-        updateBreadcrumb()
-    }
-
-    private fun showCityList() {
-        currentLevel = 1
-        lvProvince.visibility = View.GONE
-        lvCity.visibility = View.VISIBLE
-        lvDistrict.visibility = View.GONE
-        btnConfirm.isEnabled = false
-        tvTitle.text = "\u9009\u62e9\u57ce\u5e02"
-        etSearch.hint = "\ud83d\udd0d Search..."
-        cities = selectedProvince?.list ?: emptyList()
-        lvCity.adapter = makeAdapter(cities)
-        updateBreadcrumb()
-    }
-
-    private fun showDistrictList() {
-        currentLevel = 2
-        lvProvince.visibility = View.GONE
-        lvCity.visibility = View.GONE
-        lvDistrict.visibility = View.VISIBLE
-        btnConfirm.isEnabled = false
-        tvTitle.text = "\u9009\u62e9\u533a\u53bf"
-        etSearch.hint = "\ud83d\udd0d Search..."
-        districts = selectedCity?.list ?: emptyList()
-        lvDistrict.adapter = makeAdapter(districts)
-        updateBreadcrumb()
+    private fun refreshAdapter() {
+        val lv = when (currentLevel) { 0 -> lvProvince; 1 -> lvCity; else -> lvDistrict }
+        lv.adapter = makeAdapter()
     }
 
     private fun updateBreadcrumb() {
@@ -203,21 +148,18 @@ class LocationPickerActivity : AppCompatActivity() {
         selectedProvince?.let { parts.add(it.shortName) }
         selectedCity?.let { parts.add(it.shortName) }
         selectedDistrict?.let { parts.add(it.shortName) }
-        tvBreadcrumb.text = parts.joinToString(" \u25b8 ").ifEmpty { "Please select" }
+        tvBreadcrumb.text = parts.joinToString(" > ").ifEmpty { "请选择" }
     }
 
-    private fun makeAdapter(regions: List<Region>): ArrayAdapter<Region> {
-        return object : ArrayAdapter<Region>(this, android.R.layout.simple_list_item_1, regions) {
+    private fun makeAdapter(): ArrayAdapter<Region> {
+        return object : ArrayAdapter<Region>(this, android.R.layout.simple_list_item_1, displayList) {
             override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-                val view = super.getView(position, convertView, parent)
-                val r = regions[position]
-                (view as TextView).apply {
-                    text = r.fullName
-                    setTextColor(0xFFE2E8F0.toInt())
-                    textSize = 15f
-                    setPadding(36, 24, 36, 24)
+                val v = super.getView(position, convertView, parent)
+                (v as TextView).apply {
+                    text = displayList[position].fullName
+                    setTextColor(0xFFE2E8F0.toInt()); textSize = 15f; setPadding(36, 24, 36, 24)
                 }
-                return view
+                return v
             }
         }
     }
@@ -226,17 +168,13 @@ class LocationPickerActivity : AppCompatActivity() {
         val province = selectedProvince ?: return
         val city = selectedCity ?: province
         val district = selectedDistrict
-
-        val location = SelectedLocation(
-            province = province.fullName,
-            city = city.fullName,
-            district = district?.fullName ?: "",
-            latitude = 0.0,
-            longitude = 0.0,
-            adcode = (district?.adcode ?: city.adcode ?: province.adcode).toString()
-        )
-        LocationStore.save(this, location)
-        Toast.makeText(this, "Set: ${location.getFormattedAddress()}", Toast.LENGTH_SHORT).show()
+        val adcode = district?.adcode ?: city.adcode ?: province.adcode
+        LocationStore.save(this, SelectedLocation(
+            province = province.fullName, city = city.fullName,
+            district = district?.fullName ?: "", latitude = 0.0, longitude = 0.0,
+            adcode = adcode.toString()
+        ))
+        Toast.makeText(this, "已设置", Toast.LENGTH_SHORT).show()
         finish()
     }
 }

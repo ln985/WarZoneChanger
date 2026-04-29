@@ -21,14 +21,14 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="\ud83c\udfae"
+                android:text="🎮"
                 android:textSize="64sp"
                 android:layout_marginBottom="16dp"/>
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="\u6d41\u5e74\u6539\u6218\u533a\u5de5\u5177"
+                android:text="流年改战区工具"
                 android:textColor="#60a5fa"
                 android:textSize="30sp"
                 android:textStyle="bold"
@@ -57,7 +57,7 @@
                 <TextView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="\u8f93\u5165\u5361\u5bc6\u6fc0\u6d3b"
+                    android:text="输入卡密激活"
                     android:textColor="#e2e8f0"
                     android:textSize="16sp"
                     android:textStyle="bold"
@@ -68,7 +68,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="52dp"
                     android:background="@drawable/bg_input"
-                    android:hint="\u8bf7\u8f93\u5165\u5361\u5bc6"
+                    android:hint="请输入卡密"
                     android:textColor="#e2e8f0"
                     android:textColorHint="#475569"
                     android:paddingHorizontal="16dp"
@@ -103,7 +103,7 @@
                 android:id="@+id/btn_login"
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
-                android:text="\u6fc0 \u6d3b"
+                android:text="激 活"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 android:background="@drawable/bg_btn_green"
@@ -115,7 +115,7 @@
                 android:id="@+id/btn_announcement"
                 android:layout_width="match_parent"
                 android:layout_height="48dp"
-                android:text="\ud83d\udce2 \u7cfb\u7edf\u516c\u544a"
+                android:text="📢 系统公告"
                 android:textSize="14sp"
                 android:background="@drawable/bg_btn_blue"
                 android:textColor="#ffffff"
@@ -124,7 +124,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="v1.0.0 - Powered by WarZone"
+                android:text="v1.0.0 · Powered by WarZone"
                 android:textColor="#1e293b"
                 android:textSize="11sp"
                 android:gravity="center"/>

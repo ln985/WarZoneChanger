@@ -4,20 +4,17 @@
     android:layout_height="match_parent"
     android:background="#0f172a"
     android:fillViewport="true">
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="20dp">
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:layout_marginBottom="4dp">
-
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -26,7 +23,6 @@
                 android:textColor="#60a5fa"
                 android:textSize="20sp"
                 android:textStyle="bold"/>
-
             <TextView
                 android:id="@+id/tv_expiry"
                 android:layout_width="wrap_content"
@@ -35,13 +31,11 @@
                 android:textColor="#475569"
                 android:textSize="12sp"/>
         </LinearLayout>
-
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="#1e293b"
             android:layout_marginBottom="20dp"/>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -50,18 +44,16 @@
             android:padding="28dp"
             android:gravity="center_horizontal"
             android:layout_marginBottom="16dp">
-
             <TextView
                 android:id="@+id/tv_status"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="○ GPS模拟已停止"
+                android:text="○ 战区修改已停止"
                 android:textColor="#ef4444"
                 android:textSize="22sp"
                 android:textStyle="bold"
                 android:gravity="center"
                 android:layout_marginBottom="8dp"/>
-
             <TextView
                 android:id="@+id/tv_location"
                 android:layout_width="match_parent"
@@ -71,18 +63,16 @@
                 android:textSize="16sp"
                 android:gravity="center"/>
         </LinearLayout>
-
         <Button
             android:id="@+id/btn_toggle"
             android:layout_width="match_parent"
             android:layout_height="54dp"
-            android:text="启动模拟"
+            android:text="启动修改"
             android:textSize="16sp"
             android:textStyle="bold"
             android:background="@drawable/bg_btn_green"
             android:textColor="#fff"
             android:layout_marginBottom="10dp"/>
-
         <Button
             android:id="@+id/btn_pick_location"
             android:layout_width="match_parent"
@@ -92,7 +82,6 @@
             android:background="@drawable/bg_btn_blue"
             android:textColor="#fff"
             android:layout_marginBottom="10dp"/>
-
         <Button
             android:id="@+id/btn_announcement"
             android:layout_width="match_parent"
@@ -102,22 +91,12 @@
             android:background="@drawable/bg_btn_blue"
             android:textColor="#ffffff"
             android:layout_marginBottom="16dp"/>
-
-        <ProgressBar
-            android:id="@+id/progress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:visibility="gone"
-            android:layout_marginBottom="16dp"/>
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/bg_card"
             android:orientation="vertical"
             android:padding="20dp">
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -126,19 +105,16 @@
                 android:textSize="15sp"
                 android:textStyle="bold"
                 android:layout_marginBottom="12dp"/>
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="① 点击「选择虚拟位置」设置目标战区
-② 在开发者选项中设置本应用为模拟位置应用
-③ 点击「启动模拟」开始注入位置
-④ 打开王者荣耀查看战区已修改
-⑤ 不使用时请关闭模拟"
+② 点击「启动修改」开启VPN代理
+③ 打开王者荣耀，战区将自动修改
+④ 不使用时请关闭代理"
                 android:textColor="#94a3b8"
                 android:textSize="13sp"
                 android:lineSpacingExtra="6dp"/>
         </LinearLayout>
-
     </LinearLayout>
 </ScrollView>

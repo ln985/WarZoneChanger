@@ -17,11 +17,15 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle
+      - name: Setup Gradle 8.0
         uses: gradle/actions/setup-gradle@v4
 
       - name: Generate Gradle Wrapper
-        run: gradle wrapper --gradle-version 8.0
+        run: |
+          cd /tmp
+          mkdir gradle-init && cd gradle-init
+          gradle wrapper --gradle-version 8.0
+          cp -r gradle gradlew gradlew.bat $GITHUB_WORKSPACE/
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon

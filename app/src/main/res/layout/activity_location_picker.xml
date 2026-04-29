@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0f172a"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- 顶栏：标题+确定 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="12dp">
+
+        <TextView
+            android:id="@+id/tv_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="选择省份"
+            android:textColor="#60a5fa"
+            android:textSize="18sp"
+            android:textStyle="bold"/>
+
+        <Button
+            android:id="@+id/btn_confirm"
+            android:layout_width="wrap_content"
+            android:layout_height="38dp"
+            android:text="确 定"
+            android:background="@drawable/bg_btn_green"
+            android:textColor="#fff"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:paddingHorizontal="20dp"
+            android:enabled="false"/>
+    </LinearLayout>
+
+    <!-- 面包屑导航 -->
+    <TextView
+        android:id="@+id/tv_breadcrumb"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="请选择地区"
+        android:textColor="#94a3b8"
+        android:textSize="13sp"
+        android:background="@drawable/bg_card"
+        android:padding="12dp"
+        android:layout_marginBottom="12dp"/>
+
+    <!-- 搜索框 -->
+    <EditText
+        android:id="@+id/et_search"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:background="@drawable/bg_input"
+        android:hint="🔍 搜索地区名称..."
+        android:textColor="#e2e8f0"
+        android:textColorHint="#475569"
+        android:paddingHorizontal="14dp"
+        android:textSize="14sp"
+        android:singleLine="true"
+        android:imeOptions="actionSearch"
+        android:layout_marginBottom="8dp"/>
+
+    <!-- 省份列表 -->
+    <ListView
+        android:id="@+id/lv_province"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="#1e293b"
+        android:dividerHeight="1dp"
+        android:visibility="visible"
+        android:listSelector="#1e293b"
+        android:fastScrollEnabled="true"/>
+
+    <!-- 城市列表 -->
+    <ListView
+        android:id="@+id/lv_city"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="#1e293b"
+        android:dividerHeight="1dp"
+        android:visibility="gone"
+        android:listSelector="#1e293b"
+        android:fastScrollEnabled="true"/>
+
+    <!-- 区县列表 -->
+    <ListView
+        android:id="@+id/lv_district"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:divider="#1e293b"
+        android:dividerHeight="1dp"
+        android:visibility="gone"
+        android:listSelector="#1e293b"
+        android:fastScrollEnabled="true"/>
+
+</LinearLayout>

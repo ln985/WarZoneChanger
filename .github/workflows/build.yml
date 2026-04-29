@@ -17,22 +17,22 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Gradle 8.0
-        uses: gradle/actions/setup-gradle@v4
-
       - name: Generate Gradle Wrapper
         run: |
-          cd /tmp
-          mkdir gradle-init && cd gradle-init
+          mkdir -p /tmp/wgen && cd /tmp/wgen
+          echo "rootProject.name = 'tmp'" > settings.gradle
           gradle wrapper --gradle-version 8.0
-          cp -r gradle gradlew gradlew.bat $GITHUB_WORKSPACE/
+          mkdir -p $GITHUB_WORKSPACE/gradle/wrapper
+          cp gradlew gradlew.bat $GITHUB_WORKSPACE/
+          cp gradle/wrapper/* $GITHUB_WORKSPACE/gradle/wrapper/
+          chmod +x $GITHUB_WORKSPACE/gradlew
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
-        uses: actions/upload-artifact@v4
         if: success()
+        uses: actions/upload-artifact@v4
         with:
           name: WarZoneChanger
           path: app/build/outputs/apk/debug/app-debug.apk

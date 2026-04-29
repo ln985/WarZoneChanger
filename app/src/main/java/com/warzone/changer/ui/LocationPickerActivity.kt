@@ -20,8 +20,7 @@ class LocationPickerActivity : AppCompatActivity() {
         val adcode: Int = 0,
         val shortName: String = "",
         val fullName: String = "",
-        val list: List<Region>? = null,
-        val lowestRankScore: Int = 0
+        val list: List<Region>? = null
     )
 
     private lateinit var lvProvince: ListView
@@ -71,7 +70,13 @@ class LocationPickerActivity : AppCompatActivity() {
                 cities = selectedProvince?.list ?: emptyList()
                 districts = emptyList()
                 etSearch.text.clear()
-                showCityList()
+                if (cities.isEmpty() || isLeafLevel(cities)) {
+                    selectedCity = null
+                    updateBreadcrumb()
+                    btnConfirm.isEnabled = true
+                } else {
+                    showCityList()
+                }
             }
         }
 
@@ -81,7 +86,13 @@ class LocationPickerActivity : AppCompatActivity() {
                 selectedDistrict = null
                 districts = selectedCity?.list ?: emptyList()
                 etSearch.text.clear()
-                showDistrictList()
+                if (districts.isEmpty() || isLeafLevel(districts)) {
+                    selectedDistrict = null
+                    updateBreadcrumb()
+                    btnConfirm.isEnabled = true
+                } else {
+                    showDistrictList()
+                }
             }
         }
 
@@ -96,12 +107,16 @@ class LocationPickerActivity : AppCompatActivity() {
         btnConfirm.setOnClickListener { saveLocation() }
     }
 
+    private fun isLeafLevel(items: List<Region>): Boolean {
+        return items.all { it.list.isNullOrEmpty() }
+    }
+
     private fun loadRegions() {
         try {
             val json = try {
                 assets.open("warzone.json").bufferedReader().use { it.readText() }
             } catch (e: Exception) {
-                val file = File("/storage/emulated/0/战区.json")
+                val file = File("/storage/emulated/0/\u6218\u533a.json")
                 if (file.exists()) file.readText() else throw e
             }
             val type = object : TypeToken<List<Region>>() {}.type
@@ -109,7 +124,7 @@ class LocationPickerActivity : AppCompatActivity() {
             provinces = allProvinces
             showProvinceList()
         } catch (e: Exception) {
-            Toast.makeText(this, "加载战区数据失败: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "Load failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -150,8 +165,8 @@ class LocationPickerActivity : AppCompatActivity() {
         lvCity.visibility = View.GONE
         lvDistrict.visibility = View.GONE
         btnConfirm.isEnabled = false
-        tvTitle.text = "选择省份"
-        etSearch.hint = "🔍 搜索省份..."
+        tvTitle.text = "\u9009\u62e9\u7701\u4efd"
+        etSearch.hint = "\ud83d\udd0d Search..."
         provinces = allProvinces
         lvProvince.adapter = makeAdapter(provinces)
         updateBreadcrumb()
@@ -163,8 +178,8 @@ class LocationPickerActivity : AppCompatActivity() {
         lvCity.visibility = View.VISIBLE
         lvDistrict.visibility = View.GONE
         btnConfirm.isEnabled = false
-        tvTitle.text = "选择城市"
-        etSearch.hint = "🔍 搜索城市..."
+        tvTitle.text = "\u9009\u62e9\u57ce\u5e02"
+        etSearch.hint = "\ud83d\udd0d Search..."
         cities = selectedProvince?.list ?: emptyList()
         lvCity.adapter = makeAdapter(cities)
         updateBreadcrumb()
@@ -176,8 +191,8 @@ class LocationPickerActivity : AppCompatActivity() {
         lvCity.visibility = View.GONE
         lvDistrict.visibility = View.VISIBLE
         btnConfirm.isEnabled = false
-        tvTitle.text = "选择区县"
-        etSearch.hint = "🔍 搜索区县..."
+        tvTitle.text = "\u9009\u62e9\u533a\u53bf"
+        etSearch.hint = "\ud83d\udd0d Search..."
         districts = selectedCity?.list ?: emptyList()
         lvDistrict.adapter = makeAdapter(districts)
         updateBreadcrumb()
@@ -188,7 +203,7 @@ class LocationPickerActivity : AppCompatActivity() {
         selectedProvince?.let { parts.add(it.shortName) }
         selectedCity?.let { parts.add(it.shortName) }
         selectedDistrict?.let { parts.add(it.shortName) }
-        tvBreadcrumb.text = parts.joinToString(" ▸ ").ifEmpty { "请选择地区" }
+        tvBreadcrumb.text = parts.joinToString(" \u25b8 ").ifEmpty { "Please select" }
     }
 
     private fun makeAdapter(regions: List<Region>): ArrayAdapter<Region> {
@@ -197,7 +212,7 @@ class LocationPickerActivity : AppCompatActivity() {
                 val view = super.getView(position, convertView, parent)
                 val r = regions[position]
                 (view as TextView).apply {
-                    text = if (r.lowestRankScore > 0) "${r.fullName}  🏆${r.lowestRankScore}" else r.fullName
+                    text = r.fullName
                     setTextColor(0xFFE2E8F0.toInt())
                     textSize = 15f
                     setPadding(36, 24, 36, 24)
@@ -221,7 +236,7 @@ class LocationPickerActivity : AppCompatActivity() {
             adcode = (district?.adcode ?: city.adcode ?: province.adcode).toString()
         )
         LocationStore.save(this, location)
-        Toast.makeText(this, "已设置: ${location.getFormattedAddress()}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Set: ${location.getFormattedAddress()}", Toast.LENGTH_SHORT).show()
         finish()
     }
 }

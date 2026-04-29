@@ -2,9 +2,9 @@ package com.warzone.changer.ui
 
 import android.app.AlertDialog
 import android.content.Intent
-import android.net.VpnService
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -20,22 +20,18 @@ import com.warzone.changer.R
 import com.warzone.changer.data.DeviceStore
 import com.warzone.changer.data.LocationStore
 import com.warzone.changer.model.Announcement
-import com.warzone.changer.service.VpnProxyService
+import com.warzone.changer.service.LocationSpoofService
 import com.warzone.changer.utils.ApiClient
 import kotlinx.coroutines.launch
 
 class MainActivity : AppCompatActivity() {
-
-    companion object {
-        private const val VPN_REQ = 1001
-    }
 
     private lateinit var tvStatus: TextView
     private lateinit var tvLocation: TextView
     private lateinit var tvExpiry: TextView
     private lateinit var btnToggle: Button
     private lateinit var btnPickLocation: Button
-    private lateinit var progressBar: ProgressBar
+    private lateinit var btnAnnouncement: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,61 +54,79 @@ class MainActivity : AppCompatActivity() {
         tvExpiry = findViewById(R.id.tv_expiry)
         btnToggle = findViewById(R.id.btn_toggle)
         btnPickLocation = findViewById(R.id.btn_pick_location)
-        progressBar = findViewById(R.id.progress)
+        btnAnnouncement = findViewById(R.id.btn_announcement)
 
-        tvExpiry.text = "到期时间: ${DeviceStore.getExpiresAt(this) ?: "未知"}"
+        tvExpiry.text = "Expires: ${DeviceStore.getExpiresAt(this) ?: "Unknown"}"
 
         btnToggle.setOnClickListener {
-            if (VpnProxyService.isRunning) stopVpn() else startVpn()
+            if (LocationSpoofService.isRunning) stopSpoof() else startSpoof()
         }
 
         btnPickLocation.setOnClickListener {
             startActivity(Intent(this, LocationPickerActivity::class.java))
         }
 
+        btnAnnouncement.setOnClickListener {
+            loadAndShowAnnouncements()
+        }
+
         updateUI()
     }
 
-    private fun startVpn() {
+    private fun startSpoof() {
         if (!LocationStore.has(this)) {
-            Toast.makeText(this, "请先选择虚拟位置", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Please select location first", Toast.LENGTH_SHORT).show()
             return
         }
-        val intent = VpnService.prepare(this)
-        if (intent != null) {
-            startActivityForResult(intent, VPN_REQ)
-        } else {
-            launchVpnService()
+
+        // Check mock location permission
+        val allowedApps = Settings.Secure.getString(contentResolver, "mock_location")
+        if (allowedApps == null || !allowedApps.contains(packageName)) {
+            AlertDialog.Builder(this)
+                .setTitle("Mock Location Permission")
+                .setMessage("Please set this app as mock location app:\n\nDeveloper Options > Select mock location app > LiuNian WarZone Tool")
+                .setPositiveButton("Open Settings") { _, _ ->
+                    try {
+                        startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
+                    } catch (e: Exception) {
+                        startActivity(Intent(Settings.ACTION_SETTINGS))
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
+            return
         }
+
+        val intent = Intent(this, LocationSpoofService::class.java).apply {
+            action = LocationSpoofService.ACTION_START
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            startForegroundService(intent)
+        } else {
+            startService(intent)
+        }
+        btnToggle.postDelayed({ updateUI() }, 1000)
     }
 
-    private fun stopVpn() {
-        startService(Intent(this, VpnProxyService::class.java).apply {
-            action = VpnProxyService.ACTION_STOP
+    private fun stopSpoof() {
+        startService(Intent(this, LocationSpoofService::class.java).apply {
+            action = LocationSpoofService.ACTION_STOP
         })
         btnToggle.postDelayed({ updateUI() }, 500)
     }
 
-    private fun launchVpnService() {
-        val intent = Intent(this, VpnProxyService::class.java).apply {
-            action = VpnProxyService.ACTION_START
-        }
-        startService(intent)
-        btnToggle.postDelayed({ updateUI() }, 1000)
-    }
-
     private fun updateUI() {
-        val running = VpnProxyService.isRunning
-        tvStatus.text = if (running) "● VPN运行中" else "○ VPN已停止"
+        val running = LocationSpoofService.isRunning
+        tvStatus.text = if (running) "GPS Mock Running" else "GPS Mock Stopped"
         tvStatus.setTextColor(ContextCompat.getColor(this,
             if (running) android.R.color.holo_green_dark else android.R.color.holo_red_dark))
-        btnToggle.text = if (running) "停止代理" else "启动代理"
+        btnToggle.text = if (running) "Stop Mock" else "Start Mock"
 
         val loc = LocationStore.get(this)
         tvLocation.text = if (loc != null && loc.isValid()) {
-            "📍 ${loc.getFormattedAddress()}"
+            "Location: ${loc.getFormattedAddress()}"
         } else {
-            "⚠️ 未选择位置"
+            "No location selected"
         }
     }
 
@@ -135,7 +149,7 @@ class MainActivity : AppCompatActivity() {
 
         for ((index, ann) in announcements.withIndex()) {
             val titleView = TextView(this@MainActivity).apply {
-                text = "📢 ${ann.title}"
+                text = ann.title
                 setTextColor(0xFF60A5FA.toInt())
                 textSize = 17f
                 typeface = Typeface.DEFAULT_BOLD
@@ -187,9 +201,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         AlertDialog.Builder(this)
-            .setTitle("系统公告")
+            .setTitle("Announcement")
             .setView(scroll)
-            .setPositiveButton("我知道了", null)
+            .setPositiveButton("OK", null)
             .setCancelable(true)
             .show()
     }
@@ -203,11 +217,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == VPN_REQ && resultCode == RESULT_OK) launchVpnService()
-    }
-
     override fun onResume() {
         super.onResume()
         updateUI()
@@ -216,7 +225,7 @@ class MainActivity : AppCompatActivity() {
             val (auth, _) = ApiClient.heartbeat(deviceId)
             if (!auth) {
                 DeviceStore.setUnauthorized(this@MainActivity)
-                Toast.makeText(this@MainActivity, "授权已失效，请重新激活", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, "Authorization expired", Toast.LENGTH_LONG).show()
                 startActivity(Intent(this@MainActivity, LoginActivity::class.java))
                 finish()
             }

@@ -1,14 +1,11 @@
 package com.warzone.changer.injector
 
-import android.util.Log
 import com.warzone.changer.model.SelectedLocation
 import org.json.JSONObject
 
 object LocationModifier {
-    private const val TAG = "LocationMod"
-
     fun modifyResponse(body: String, loc: SelectedLocation): String {
-        return try { modifyJson(body, loc) } catch (e: Exception) { replaceString(body, loc) }
+        return try { modifyJson(body, loc) } catch (e: Exception) { simpleReplace(body, loc) }
     }
 
     private fun modifyJson(s: String, loc: SelectedLocation): String {
@@ -40,8 +37,6 @@ object LocationModifier {
         if (loc.province.isNotEmpty()) o.put("province", loc.province)
         if (loc.city.isNotEmpty()) o.put("city", loc.city)
         if (loc.district.isNotEmpty()) o.put("district", loc.district)
-        o.optJSONObject("ad_info")?.let { patchAdInfo(it, loc) }
-        o.optJSONObject("address_component")?.let { patchAddr(it, loc) }
     }
 
     private fun patchAddr(o: JSONObject, loc: SelectedLocation) {
@@ -51,12 +46,25 @@ object LocationModifier {
         if (loc.district.isNotEmpty()) o.put("district", loc.district)
     }
 
-    private fun replaceString(s: String, loc: SelectedLocation): String {
+    private fun simpleReplace(s: String, loc: SelectedLocation): String {
         var r = s
-        if (loc.province.isNotEmpty()) r = r.replace(Regex("\"province\"\s*:\s*\"[^\"]*\""), "\"province\":\"" + loc.province + "\"")
-        if (loc.city.isNotEmpty()) r = r.replace(Regex("\"city\"\s*:\s*\"[^\"]*\""), "\"city\":\"" + loc.city + "\"")
-        if (loc.district.isNotEmpty()) r = r.replace(Regex("\"district\"\s*:\s*\"[^\"]*\""), "\"district\":\"" + loc.district + "\"")
-        if (loc.adcode.isNotEmpty()) r = r.replace(Regex("\"adcode\"\s*:\s*\"[^\"]*\""), "\"adcode\":\"" + loc.adcode + "\"")
+        if (loc.province.isNotEmpty()) r = simpleVal(r, "province", loc.province)
+        if (loc.city.isNotEmpty()) r = simpleVal(r, "city", loc.city)
+        if (loc.district.isNotEmpty()) r = simpleVal(r, "district", loc.district)
+        if (loc.adcode.isNotEmpty()) r = simpleVal(r, "adcode", loc.adcode)
         return r
+    }
+
+    private fun simpleVal(json: String, key: String, newVal: String): String {
+        val search = """ + key + """
+        var idx = json.indexOf(search)
+        if (idx < 0) return json
+        val colonIdx = json.indexOf(":", idx + search.length)
+        if (colonIdx < 0) return json
+        var valStart = json.indexOf(""", colonIdx + 1)
+        if (valStart < 0) return json
+        val valEnd = json.indexOf(""", valStart + 1)
+        if (valEnd < 0) return json
+        return json.substring(0, valStart + 1) + newVal + json.substring(valEnd)
     }
 }

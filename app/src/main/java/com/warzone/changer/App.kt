@@ -7,10 +7,9 @@ import android.os.Build
 
 class App : Application() {
     companion object {
-        const val CHANNEL_ID = "vpn_service"
+        const val CHANNEL_ID = "location_spoof_service"
         lateinit var instance: App
             private set
-        // 服务端地址 - 修改为你的域名
         const val API_BASE = "https://lnzdy.xf79.cn/api"
     }
 
@@ -24,10 +23,10 @@ class App : Application() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
                 CHANNEL_ID,
-                "VPN代理服务",
+                "GPS Mock Location Service",
                 NotificationManager.IMPORTANCE_LOW
             ).apply {
-                description = "战区修改器VPN代理运行通知"
+                description = "WarZone Changer GPS mock location notification"
             }
             val nm = getSystemService(NotificationManager::class.java)
             nm.createNotificationChannel(channel)

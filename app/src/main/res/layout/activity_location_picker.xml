@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/et_search"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:hint="搜索省份..."
+        android:inputType="text"
+        android:paddingHorizontal="12dp"
+        android:background="@android:drawable/edit_text" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <!-- 省 -->
+        <ListView
+            android:id="@+id/lv_provinces"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:divider="#E0E0E0"
+            android:dividerHeight="1px" />
+
+        <!-- 市 -->
+        <ListView
+            android:id="@+id/lv_cities"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:divider="#E0E0E0"
+            android:dividerHeight="1px" />
+
+        <!-- 区 -->
+        <ListView
+            android:id="@+id/lv_districts"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:divider="#E0E0E0"
+            android:dividerHeight="1px" />
+    </LinearLayout>
+</LinearLayout>

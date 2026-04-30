@@ -2,7 +2,7 @@ package com.warzone.changer.ui
 
 import android.app.AlertDialog
 import android.content.Intent
-import android.os.Build
+import android.net.VpnService
 import android.os.Bundle
 import android.view.View
 import android.widget.*
@@ -13,7 +13,7 @@ import com.warzone.changer.R
 import com.warzone.changer.data.DeviceStore
 import com.warzone.changer.data.LocationStore
 import com.warzone.changer.model.Announcement
-import com.warzone.changer.service.MockLocationService
+import com.warzone.changer.service.WarZoneVpnService
 import com.warzone.changer.utils.ApiClient
 import kotlinx.coroutines.launch
 import android.graphics.Typeface
@@ -21,6 +21,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 
 class MainActivity : AppCompatActivity() {
+    companion object { private const val VPN_REQ = 1001 }
     private lateinit var tvStatus: TextView
     private lateinit var tvLocation: TextView
     private lateinit var tvExpiry: TextView
@@ -46,26 +47,32 @@ class MainActivity : AppCompatActivity() {
         btnPickLocation = findViewById(R.id.btn_pick_location)
         btnAnnouncement = findViewById(R.id.btn_announcement)
         tvExpiry.text = String.format("到期: %s", DeviceStore.getExpiresAt(this) ?: "未知")
-        btnToggle.setOnClickListener { if (MockLocationService.isRunning) stopMock() else startMock() }
+        btnToggle.setOnClickListener { if (WarZoneVpnService.isRunning) stopVpn() else startVpn() }
         btnPickLocation.setOnClickListener { startActivity(Intent(this, LocationPickerActivity::class.java)) }
         btnAnnouncement.setOnClickListener { loadAndShowAnnouncements() }
         updateUI()
     }
 
-    private fun startMock() {
+    private fun startVpn() {
         if (!LocationStore.has(this)) { Toast.makeText(this, "请先选择位置", Toast.LENGTH_SHORT).show(); return }
-        val intent = Intent(this, MockLocationService::class.java).apply { action = MockLocationService.ACTION_START }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) startForegroundService(intent) else startService(intent)
+        val intent = VpnService.prepare(this)
+        if (intent != null) startActivityForResult(intent, VPN_REQ)
+        else launchVpn()
+    }
+
+    private fun launchVpn() {
+        val intent = Intent(this, WarZoneVpnService::class.java).apply { action = WarZoneVpnService.ACTION_START }
+        startService(intent)
         btnToggle.postDelayed({ updateUI() }, 1000)
     }
 
-    private fun stopMock() {
-        startService(Intent(this, MockLocationService::class.java).apply { action = MockLocationService.ACTION_STOP })
+    private fun stopVpn() {
+        startService(Intent(this, WarZoneVpnService::class.java).apply { action = WarZoneVpnService.ACTION_STOP })
         btnToggle.postDelayed({ updateUI() }, 500)
     }
 
     private fun updateUI() {
-        val running = MockLocationService.isRunning
+        val running = WarZoneVpnService.isRunning
         tvStatus.text = if (running) "● 战区修改运行中" else "○ 战区修改已停止"
         tvStatus.setTextColor(ContextCompat.getColor(this, if (running) android.R.color.holo_green_dark else android.R.color.holo_red_dark))
         btnToggle.text = if (running) "停止修改" else "启动修改"
@@ -75,10 +82,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun loadAndShowAnnouncements() {
         lifecycleScope.launch {
-            try {
-                val list = ApiClient.getAnnouncements()
-                if (list.isNotEmpty()) showAnnouncementDialog(list)
-            } catch (_: Exception) {}
+            try { val list = ApiClient.getAnnouncements(); if (list.isNotEmpty()) showAnnouncementDialog(list) } catch (_: Exception) {}
         }
     }
 
@@ -100,11 +104,13 @@ class MainActivity : AppCompatActivity() {
                 setBackgroundColor(0xFF334155.toInt())
             })
         }
-        val scroll = ScrollView(this).apply {
-            addView(container)
-            layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (resources.displayMetrics.heightPixels * 0.6).toInt())
-        }
+        val scroll = ScrollView(this).apply { addView(container); layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (resources.displayMetrics.heightPixels * 0.6).toInt()) }
         AlertDialog.Builder(this).setTitle("系统公告").setView(scroll).setPositiveButton("我知道了", null).setCancelable(true).show()
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == VPN_REQ && resultCode == RESULT_OK) launchVpn()
     }
 
     override fun onResume() {

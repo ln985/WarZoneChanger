@@ -3,18 +3,12 @@ package com.warzone.changer.vpn
 import android.util.Log
 import com.warzone.changer.model.SelectedLocation
 import java.io.InputStream
-import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
 
-/**
- * Local HTTP proxy that intercepts responses from apis.map.qq.com
- * and modifies the adcode in the JSON response
- */
 class LocalHttpProxy(private val port: Int = 18080) {
     companion object {
         private const val TAG = "LocalHttpProxy"
-        private val TARGET_HOSTS = setOf("apis.map.qq.com", "lbs.qq.com")
     }
     
     private var serverSocket: ServerSocket? = null
@@ -26,7 +20,7 @@ class LocalHttpProxy(private val port: Int = 18080) {
         Thread({
             try {
                 serverSocket = ServerSocket(port)
-                Log.i(TAG, "Proxy started on port $port")
+                Log.i(TAG, "Proxy started on port " + port)
                 while (running) {
                     val client = serverSocket?.accept() ?: continue
                     Thread({ handleClient(client) }).start()
@@ -42,7 +36,6 @@ class LocalHttpProxy(private val port: Int = 18080) {
             val input = client.getInputStream().buffered()
             val output = client.getOutputStream()
             
-            // Read HTTP request
             val requestLine = readLine(input) ?: return
             val headers = mutableMapOf<String, String>()
             var line: String?
@@ -55,24 +48,24 @@ class LocalHttpProxy(private val port: Int = 18080) {
                 }
             }
             
-            val host = headers["host"] ?: return
-            if (!TARGET_HOSTS.any { host.contains(it) }) {
+            val host = headers["host"] ?: ""
+            if (host.isEmpty() || (!host.contains("apis.map.qq.com") && !host.contains("lbs.qq.com"))) {
                 client.close(); return
             }
             
-            // Forward to real server
+            Log.d(TAG, "Intercepting request to " + host)
+            
             val realHost = host.split(":")[0]
             val realPort = if (host.contains(":")) host.split(":")[1].toInt() else 80
             val remote = Socket(realHost, realPort)
             val remoteOut = remote.getOutputStream()
             val remoteIn = remote.getInputStream()
             
-            // Rebuild and forward request
             val rebuilt = StringBuilder()
-            rebuilt.append(requestLine.replace("http://$host", "")).append("
+            rebuilt.append(requestLine.replace("http://" + host, "")).append("
 ")
             for ((k, v) in headers) {
-                rebuilt.append("$k: $v
+                rebuilt.append(k).append(": ").append(v).append("
 ")
             }
             rebuilt.append("
@@ -80,7 +73,6 @@ class LocalHttpProxy(private val port: Int = 18080) {
             remoteOut.write(rebuilt.toString().toByteArray())
             remoteOut.flush()
             
-            // Read response
             val responseLine = readLine(remoteIn) ?: ""
             val respHeaders = StringBuilder()
             respHeaders.append(responseLine).append("
@@ -103,11 +95,9 @@ class LocalHttpProxy(private val port: Int = 18080) {
                     if (key == "transfer-encoding" && value.contains("chunked")) chunked = true
                 }
             }
-            respHeaders.append("
-")
             
-            // Read body
-            var body = if (contentLen > 0) {
+            var body = ""
+            if (contentLen > 0) {
                 val buf = ByteArray(contentLen)
                 var read = 0
                 while (read < contentLen) {
@@ -115,33 +105,32 @@ class LocalHttpProxy(private val port: Int = 18080) {
                     if (n < 0) break
                     read += n
                 }
-                String(buf, 0, read, Charsets.UTF_8)
+                body = String(buf, 0, read, Charsets.UTF_8)
             } else if (chunked) {
-                readChunked(remoteIn)
-            } else ""
+                body = readChunked(remoteIn)
+            }
             
             remote.close()
             
-            // Modify response if it contains location data
             val loc = targetLocation
             if (loc != null && body.isNotEmpty()) {
                 try {
                     body = LocationModifier.modifyResponse(body, loc)
+                    Log.d(TAG, "Modified response adcode to " + loc.adcode)
                 } catch (e: Exception) {
                     Log.w(TAG, "Modify failed", e)
                 }
             }
             
-            // Send response
             val bodyBytes = body.toByteArray(Charsets.UTF_8)
             val resp = StringBuilder()
             resp.append(responseLine).append("
 ")
-            resp.append("content-length: ${bodyBytes.size}
+            resp.append("content-length: ").append(bodyBytes.size.toString()).append("
 ")
             for ((k, v) in respHeaderMap) {
                 if (k != "content-length" && k != "transfer-encoding") {
-                    resp.append("$k: $v
+                    resp.append(k).append(": ").append(v).append("
 ")
                 }
             }
@@ -152,7 +141,7 @@ class LocalHttpProxy(private val port: Int = 18080) {
             output.flush()
             client.close()
         } catch (e: Exception) {
-            Log.w(TAG, "Client handling error", e)
+            Log.w(TAG, "Client error", e)
             try { client.close() } catch (_: Exception) {}
         }
     }
@@ -185,7 +174,7 @@ class LocalHttpProxy(private val port: Int = 18080) {
                 read += n
             }
             sb.append(String(buf, 0, read, Charsets.UTF_8))
-            readLine(input) // trailing CRLF
+            readLine(input)
         }
         return sb.toString()
     }
